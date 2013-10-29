@@ -11,6 +11,7 @@
 
 #define SEGMENT_RESOLUTION 20
 #define RADIUS 50
+#define TIME_STRING_BUFFER_SIZE 6
 
 // extends it out a little further to chop off edge of circle
 #define EDGE_OF_SEGMENT_COMPENSATION 4
@@ -30,7 +31,7 @@ int twelve_oclock_rotation = -90,
   angle_hour_interval = 360 / 12,
   angle_minute_interval = 360 / 60;
 
-char time_string[6];
+char time_string[TIME_STRING_BUFFER_SIZE];
 
 GPathInfo triangle_path_info = {
   .num_points = SEGMENT_RESOLUTION,
