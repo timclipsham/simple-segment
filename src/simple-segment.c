@@ -6,7 +6,7 @@
 #define MY_UUID { 0x59, 0x01, 0x00, 0x11, 0x37, 0xE5, 0x44, 0x30, 0x9F, 0x41, 0x54, 0x22, 0x18, 0x7B, 0x20, 0xD9 }
 
 // Shorthand for debug
-#define D(fmt, args...)                                \
+#define D(fmt, args...) \
   app_log(APP_LOG_LEVEL_DEBUG, __FILE__, __LINE__, fmt, ## args)
 
 #define SEGMENT_RESOLUTION 20
@@ -24,7 +24,9 @@ Window window;
 Layer segment_display_layer;
 GPath triangle_path;
 
+int radius_to_test = 50;
 int angle_to_test = 45;
+int rotation_to_test = 90;
 
 GPathInfo triangle_path_info = {
   .num_points = SEGMENT_RESOLUTION,
@@ -42,6 +44,9 @@ GPathInfo triangle_path_info = {
 //   }
 // }
 
+// parametric equation for a circle
+//   x = cx + r * cos(a)
+//   y = cy + r * sin(a)
 GPoint point_on_circle(int radius, int angle) {
   return (GPoint) {
     .x = 0 + (radius + EDGE_OF_SEGMENT_COMPENSATION) *
@@ -53,28 +58,31 @@ GPoint point_on_circle(int radius, int angle) {
 }
 
 void render_segment(GContext *ctx, GPoint position, int radius, int rotation, int angle) {
-  graphics_context_set_fill_color(ctx, GColorWhite);
-  graphics_fill_circle(ctx, position, radius);
+  angle = (360 - angle) % 360;
+  rotation = rotation % 360;
 
-  triangle_path_info.points[1] = point_on_circle(radius, rotation);
+  triangle_path_info.points[0] = GPointZero;
+  triangle_path_info.points[1] = point_on_circle(radius, 0);
 
   int partial_angle; // float??
 
   for (int i = 1; i <= SEGMENT_RESOLUTION - 2; ++i) {
     partial_angle = angle / (SEGMENT_RESOLUTION - 2) * i;
-    triangle_path_info.points[i+1] = point_on_circle(radius, partial_angle);
+    triangle_path_info.points[i + 1] = point_on_circle(radius, -partial_angle);
   }
 
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_circle(ctx, position, radius);
   graphics_context_set_fill_color(ctx, GColorBlack);
   gpath_move_to(&triangle_path, position);
-  // gpath_rotate_to(&triangle_path, -(TRIG_MAX_ANGLE / 4));
+  gpath_rotate_to(&triangle_path, TRIG_MAX_ANGLE * rotation / 360);
   gpath_draw_filled(ctx, &triangle_path);
 }
 
 void segment_display_layer_update_callback(Layer *me, GContext *ctx) {
   // PblTm time;
   // get_time(&time);
-  render_segment(ctx, grect_center_point(&me->frame), 35, 0, angle_to_test);
+  render_segment(ctx, grect_center_point(&me->frame), radius_to_test, rotation_to_test, angle_to_test);
 }
 
 // temporary function for testing
