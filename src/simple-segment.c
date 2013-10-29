@@ -10,39 +10,32 @@
   app_log(APP_LOG_LEVEL_DEBUG, __FILE__, __LINE__, fmt, ## args)
 
 #define SEGMENT_RESOLUTION 20
+#define RADIUS 50
 
 // extends it out a little further to chop off edge of circle
-#define EDGE_OF_SEGMENT_COMPENSATION 3
+#define EDGE_OF_SEGMENT_COMPENSATION 4
 
 PBL_APP_INFO(MY_UUID,
              "Simple Segment", "Tim Clipsham",
              1, 0, /* App version */
              DEFAULT_MENU_ICON,
-             APP_INFO_STANDARD_APP);
+             APP_INFO_WATCH_FACE);
 
 Window window;
+TextLayer time_display;
 Layer segment_display_layer;
 GPath triangle_path;
 
-int radius_to_test = 50;
-int angle_to_test = 45;
-int rotation_to_test = 90;
+int twelve_oclock_rotation = -90,
+  angle_hour_interval = 360 / 12,
+  angle_minute_interval = 360 / 60;
+
+char time_string[6];
 
 GPathInfo triangle_path_info = {
   .num_points = SEGMENT_RESOLUTION,
   .points = (GPoint []) {}
 };
-
-// void log_path_info(GPathInfo path_info) {
-//   GPoint point;
-
-//   D("GPathInfo.num_points: %i", path_info.num_points);
-
-//   for (int i = 0; i < path_info.num_points; ++i) {
-//     point = path_info.points[i];
-//     D("  %i => [%i, %i]", i, point.x, point.y);
-//   }
-// }
 
 // parametric equation for a circle
 //   x = cx + r * cos(a)
@@ -79,40 +72,66 @@ void render_segment(GContext *ctx, GPoint position, int radius, int rotation, in
   gpath_draw_filled(ctx, &triangle_path);
 }
 
+void render_clock(GContext *ctx, GPoint position, PblTm time) {
+  int hours, minutes, rotation, angle, hours_clock_angle_deg, minutes_clock_angle_deg;
+
+  angle = 0;
+  rotation = 0;
+  hours = time.tm_hour;
+  minutes = time.tm_min;
+
+  hours_clock_angle_deg = angle_hour_interval * hours % 360;
+  minutes_clock_angle_deg = angle_minute_interval * minutes % 360;
+
+  if (hours % 2 == 0 && minutes_clock_angle_deg >= hours_clock_angle_deg) {
+    rotation = hours_clock_angle_deg;
+    angle = minutes_clock_angle_deg - hours_clock_angle_deg;
+  } else if (hours % 2 == 0 && minutes_clock_angle_deg < hours_clock_angle_deg) {
+    rotation = minutes_clock_angle_deg;
+    angle = hours_clock_angle_deg - minutes_clock_angle_deg;
+  } else if (hours % 2 != 0 && minutes_clock_angle_deg >= hours_clock_angle_deg) {
+    rotation = minutes_clock_angle_deg;
+    angle = 360 + hours_clock_angle_deg - minutes_clock_angle_deg;
+  } else if (hours % 2 != 0 && minutes_clock_angle_deg < hours_clock_angle_deg) {
+    rotation = hours_clock_angle_deg;
+    angle = 360 - hours_clock_angle_deg + minutes_clock_angle_deg;
+  }
+
+  rotation += twelve_oclock_rotation;
+  render_segment(ctx, position, RADIUS, rotation, angle);
+}
+
 void segment_display_layer_update_callback(Layer *me, GContext *ctx) {
-  // PblTm time;
-  // get_time(&time);
-  render_segment(ctx, grect_center_point(&me->frame), radius_to_test, rotation_to_test, angle_to_test);
-}
+  PblTm time;
+  GPoint center;
 
-// temporary function for testing
-void button_up_click_handler(ClickRecognizerRef recognizer, Window *window) {
-  angle_to_test += 45;
-  layer_mark_dirty(&segment_display_layer);
-}
+  get_time(&time);
+  center = grect_center_point(&me->frame);
 
-// temporary function for testing
-void button_down_click_handler(ClickRecognizerRef recognizer, Window *window) {
-  angle_to_test -= 45;
-  layer_mark_dirty(&segment_display_layer);
-}
+  render_clock(ctx, center, time);
 
-void config_provider(ClickConfig **config, Window *window) {
-  config[BUTTON_ID_UP]->click.handler = (ClickHandler) button_up_click_handler;
-  config[BUTTON_ID_DOWN]->click.handler = (ClickHandler) button_down_click_handler;
+  string_format_time(time_string, sizeof(time_string), "%I:%M", &time);
+  text_layer_set_text(&time_display, time_string);
 }
 
 void handle_init(AppContextRef ctx) {
   window_init(&window, "Window Name");
   window_stack_push(&window, true);
   window_set_background_color(&window, GColorBlack);
-  window_set_click_config_provider(&window, (ClickConfigProvider) config_provider);
+
+  text_layer_init(&time_display, window.layer.frame);
+  text_layer_set_background_color(&time_display, GColorClear);
+  text_layer_set_text_color(&time_display, GColorWhite);
+  text_layer_set_text_alignment(&time_display, GTextAlignmentCenter);
+  text_layer_set_font(&time_display, fonts_get_system_font(FONT_KEY_GOTHIC_24));
 
   gpath_init(&triangle_path, &triangle_path_info);
 
   layer_init(&segment_display_layer, window.layer.frame);
   segment_display_layer.update_proc = &segment_display_layer_update_callback;
+
   layer_add_child(&window.layer, &segment_display_layer);
+  layer_add_child(&window.layer, &time_display.layer);
 }
 
 void handle_minute_tick(AppContextRef ctx, PebbleTickEvent *t) {
