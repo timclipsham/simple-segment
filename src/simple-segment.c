@@ -24,7 +24,7 @@ Window window;
 Layer segment_display_layer;
 GPath triangle_path;
 
-int radius_to_test = 45;
+int angle_to_test = 45;
 
 GPathInfo triangle_path_info = {
   .num_points = SEGMENT_RESOLUTION,
@@ -74,18 +74,18 @@ void render_segment(GContext *ctx, GPoint position, int radius, int rotation, in
 void segment_display_layer_update_callback(Layer *me, GContext *ctx) {
   // PblTm time;
   // get_time(&time);
-  render_segment(ctx, grect_center_point(&me->frame), 35, 0, radius_to_test);
+  render_segment(ctx, grect_center_point(&me->frame), 35, 0, angle_to_test);
 }
 
 // temporary function for testing
 void button_up_click_handler(ClickRecognizerRef recognizer, Window *window) {
-  radius_to_test += 45;
+  angle_to_test += 45;
   layer_mark_dirty(&segment_display_layer);
 }
 
 // temporary function for testing
 void button_down_click_handler(ClickRecognizerRef recognizer, Window *window) {
-  radius_to_test -= 45;
+  angle_to_test -= 45;
   layer_mark_dirty(&segment_display_layer);
 }
 
