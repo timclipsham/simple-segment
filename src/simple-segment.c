@@ -108,6 +108,7 @@ void segment_display_layer_update_callback(Layer *me, GContext *ctx) {
 
   get_time(&time);
   center = grect_center_point(&me->frame);
+  center.y += 20;  // HACK to better position the clock
 
   render_clock(ctx, center, time);
 
@@ -124,7 +125,7 @@ void handle_init(AppContextRef ctx) {
   text_layer_set_background_color(&time_display, GColorClear);
   text_layer_set_text_color(&time_display, GColorWhite);
   text_layer_set_text_alignment(&time_display, GTextAlignmentCenter);
-  text_layer_set_font(&time_display, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+  text_layer_set_font(&time_display, fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
 
   gpath_init(&triangle_path, &triangle_path_info);
 
