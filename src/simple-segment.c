@@ -14,7 +14,7 @@
 #define TIME_STRING_BUFFER_SIZE 6
 
 // extends it out a little further to chop off edge of circle
-#define EDGE_OF_SEGMENT_COMPENSATION 4
+#define EDGE_OF_SEGMENT_COMPENSATION 5
 
 PBL_APP_INFO(MY_UUID,
              "Simple Segment", "Tim Clipsham",
