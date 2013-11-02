@@ -44,21 +44,21 @@ GPathInfo triangle_path_info = {
 GPoint point_on_circle(int radius, int angle) {
   return (GPoint) {
     .x = 0 + (radius + EDGE_OF_SEGMENT_COMPENSATION) *
-    cos_lookup(TRIG_MAX_ANGLE * angle / 360) / TRIG_MAX_RATIO,
+    cos_lookup(angle) / TRIG_MAX_RATIO,
 
     .y = 0 + (radius + EDGE_OF_SEGMENT_COMPENSATION) *
-    sin_lookup(TRIG_MAX_ANGLE * angle / 360) / TRIG_MAX_RATIO
+    sin_lookup(angle) / TRIG_MAX_RATIO
   };
 }
 
 void render_segment(GContext *ctx, GPoint position, int radius, int rotation, int angle) {
-  angle = (360 - angle) % 360;
-  rotation = rotation % 360;
+  angle = ((360 - angle) % 360) / 360.0 * TRIG_MAX_ANGLE;
+  rotation = (rotation % 360) / 360.0 * TRIG_MAX_ANGLE;
 
   triangle_path_info.points[0] = GPointZero;
   triangle_path_info.points[1] = point_on_circle(radius, 0);
 
-  int partial_angle; // float??
+  int partial_angle;
 
   for (int i = 1; i <= SEGMENT_RESOLUTION - 2; ++i) {
     partial_angle = angle / (SEGMENT_RESOLUTION - 2) * i;
@@ -69,7 +69,7 @@ void render_segment(GContext *ctx, GPoint position, int radius, int rotation, in
   graphics_fill_circle(ctx, position, radius);
   graphics_context_set_fill_color(ctx, GColorBlack);
   gpath_move_to(&triangle_path, position);
-  gpath_rotate_to(&triangle_path, TRIG_MAX_ANGLE * rotation / 360);
+  gpath_rotate_to(&triangle_path, rotation);
   gpath_draw_filled(ctx, &triangle_path);
 }
 
