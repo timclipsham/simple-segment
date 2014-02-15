@@ -1,0 +1,15 @@
+{
+  "uuid": "59010011-37e5-4430-9f41-5422187b20d9",
+  "shortName": "Simple Segment",
+  "longName": "Simple Segment",
+  "companyName": "Tim Clipsham",
+  "versionCode": 2,
+  "versionLabel": "1.1.0",
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {},
+  "resources": {
+    "media": []
+  }
+}
